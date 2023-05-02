@@ -47,8 +47,9 @@ def scrape():
     driver.quit()
 
     return {
-        'title': title,
-        'images': images
+        'images': images,
+        'title': title
+
     }
 
 

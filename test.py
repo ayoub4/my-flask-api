@@ -1,6 +1,6 @@
 import requests
 
-url = " http://127.0.0.1:5000/scrape?url=https://fr.aliexpress.com/item/32864744166.html?spm=a2g0o.productlist.main.81.1af436a9CnLUyE&algo_pvid=307358c7-0123-43b1-986b-565a57b0bb71&algo_exp_id=307358c7-0123-43b1-986b-565a57b0bb71-20&pdp_npi=3%40dis%21MAD%21189.64%21115.68%21%21%21%21%21%40211be72e16826161577145301d079b%2165514016856%21sea%21MA%21913694033&curPageLogUid=Rh1GDuEoG5bE&gatewayAdapt=glo2fra"
+url = " http://127.0.0.1:5000/scrape?url=https://fr.aliexpress.com/item/1005003082438274.html?spm=a2g0o.detail.1000014.55.6ec9G9ATG9AT3p&gps-id=pcDetailBottomMoreOtherSeller&scm=1007.40000.326746.0&scm_id=1007.40000.326746.0&scm-url=1007.40000.326746.0&pvid=2f9c2c0d-598a-41db-9421-40e79d530a86&_t=gps-id:pcDetailBottomMoreOtherSeller,scm-url:1007.40000.326746.0,pvid:2f9c2c0d-598a-41db-9421-40e79d530a86,tpp_buckets:668%232846%238111%23466&pdp_npi=3%40dis%21EUR%215.03%214.03%21%21%21%21%21%402103246616812138165248249e0bd6%2112000023973107639%21rec%21FR%214452666233"
 
 response = requests.get(url)
 
