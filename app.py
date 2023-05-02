@@ -1,8 +1,9 @@
+import random
+import string
 from flask import Flask, request
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
-import os
 
 app = Flask(__name__)
 
@@ -10,18 +11,20 @@ chrome_options = Options()
 chrome_options.add_argument("--headless")  # run in headless mode so no browser window is opened
 chrome_options.add_argument("--no-sandbox")
 
-# Get the path to the ChromeDriver executable based on the operating system
-if os.name == 'nt':  # For Windows
-    chromedriver_path = os.path.join(os.getcwd(), 'chromedriver.exe')
-else:  # For Linux
-    chromedriver_path = os.path.join(os.getcwd(), 'chromedriver')
+
+@app.route('/')
+def index():
+    # Generate a random string of length 10
+    random_text = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+    return f"Random text: {random_text}"
+
 
 @app.route('/scrape')
 def scrape():
     url = request.args.get('url')
 
-    # Create the Chrome driver instance and specify the path to the ChromeDriver executable
-    driver = webdriver.Chrome(executable_path=chromedriver_path, options=chrome_options)
+    # Create the Chrome driver instance
+    driver = webdriver.Chrome(options=chrome_options)
 
     driver.get(url)
     soup = BeautifulSoup(driver.page_source, "html.parser")
@@ -41,8 +44,6 @@ def scrape():
             images.append(src)
 
     # Close the Chrome driver instance
-    print(title)
-    print(images)
     driver.quit()
 
     return {
