@@ -41,6 +41,8 @@ def scrape():
             images.append(src)
 
     # Close the Chrome driver instance
+    print(title)
+    print(images)
     driver.quit()
 
     return {
