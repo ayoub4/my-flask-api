@@ -1,5 +1,6 @@
 import random
 import string
+import socket
 from flask import Flask, request
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -23,8 +24,14 @@ def index():
 def scrape():
     url = request.args.get('url')
 
+    # Set timeout to 6 minutes (360 seconds)
+    socket.setdefaulttimeout(360)
+
     # Create the Chrome driver instance
     driver = webdriver.Chrome(options=chrome_options)
+
+    # Clear cookies
+    driver.delete_all_cookies()
 
     driver.get(url)
     soup = BeautifulSoup(driver.page_source, "html.parser")
@@ -49,7 +56,6 @@ def scrape():
     return {
         'images': images,
         'title': title
-
     }
 
 
