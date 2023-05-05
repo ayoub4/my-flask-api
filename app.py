@@ -37,8 +37,8 @@ def scrape():
         proxies = f.readlines()
 
     while True:
-        # Rotate through 10 proxies from proxies.txt file
-        proxy = proxies[c % 10].strip()
+        # Rotate through all proxies from proxies.txt file
+        proxy = proxies[c % len(proxies)].strip()
         proxy_options = {
             "proxy": {
                 "httpProxy": proxy,
@@ -79,9 +79,9 @@ def scrape():
             print(c)
             c = c + 1
             time.sleep(5)  # Wait for 5 seconds before retrying
+            driver.quit()  # Close the Chrome driver instance
         else:
-            # Close the Chrome driver instance
-            driver.quit()
+            driver.quit()  # Close the Chrome driver instance
             return {
                 'images': images,
                 'title': title
