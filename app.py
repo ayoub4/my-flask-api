@@ -12,7 +12,9 @@ app = Flask(__name__)
 chrome_options = Options()
 chrome_options.add_argument("--headless")  # run in headless mode so no browser window is opened
 chrome_options.add_argument("--no-sandbox")
-chrome_options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36") # set user agent
+chrome_options.add_argument(
+    "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36")  # set user agent
+
 
 @app.route('/')
 def index():
@@ -30,8 +32,26 @@ def scrape():
 
     # Create the Chrome driver instance
     c = 0
+    proxies = []
+    with open("proxies.txt", "r") as f:
+        proxies = f.readlines()
 
     while True:
+        # Rotate through 10 proxies from proxies.txt file
+        proxy = proxies[c % 10].strip()
+        proxy_options = {
+            "proxy": {
+                "httpProxy": proxy,
+                "ftpProxy": proxy,
+                "sslProxy": proxy,
+                "noProxy": None,
+                "proxyType": "MANUAL",
+                "class": "org.openqa.selenium.Proxy",
+                "autodetect": False
+            }
+        }
+        chrome_options.add_experimental_option("proxy", proxy_options)
+
         driver = webdriver.Chrome(options=chrome_options)
 
         # Clear cookies
@@ -57,8 +77,8 @@ def scrape():
         # If the data is not found, wait for a few seconds and try again
         if not title and not images:
             print(c)
-            c = c+1
-            time.sleep(5) # Wait for 5 seconds before retrying
+            c = c + 1
+            time.sleep(5)  # Wait for 5 seconds before retrying
         else:
             # Close the Chrome driver instance
             driver.quit()
@@ -66,6 +86,9 @@ def scrape():
                 'images': images,
                 'title': title
             }
+
+        # Increment the counter to rotate through proxies
+        c = c + 1
 
 
 if __name__ == '__main__':
