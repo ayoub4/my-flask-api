@@ -2,7 +2,6 @@ import random
 import string
 import socket
 import time
-
 from flask import Flask, request
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -30,16 +29,14 @@ def scrape():
     socket.setdefaulttimeout(360)
 
     # Create the Chrome driver instance
-    driver = webdriver.Chrome(options=chrome_options)
 
-    # Clear cookies
-    driver.delete_all_cookies()
 
-    # Initialize variables
-    title = ''
-    images = []
+    while True:
+        driver = webdriver.Chrome(options=chrome_options)
 
-    while not title and not images:
+        # Clear cookies
+        driver.delete_all_cookies()
+        # Try to scrape the page
         driver.get(url)
         soup = BeautifulSoup(driver.page_source, "html.parser")
 
@@ -49,6 +46,7 @@ def scrape():
 
         # Find all the images inside the "images-view-wrap" class
         images_view_wrap = soup.find("div", class_="images-view-wrap")
+        images = []
         if images_view_wrap:
             for img in images_view_wrap.find_all("img"):
                 src = img.get("src")
@@ -56,16 +54,16 @@ def scrape():
                     src = src.replace("jpg_50x50", "jpg")
                 images.append(src)
 
-        # Sleep for a random amount of time before trying again (between 1 and 5 seconds)
-        time.sleep(random.uniform(1, 5))
-
-    # Close the Chrome driver instance
-    driver.quit()
-
-    return {
-        'images': images,
-        'title': title
-    }
+        # If the data is not found, wait for a few seconds and try again
+        if not title and not images:
+            time.sleep(5) # Wait for 5 seconds before retrying
+        else:
+            # Close the Chrome driver instance
+            driver.quit()
+            return {
+                'images': images,
+                'title': title
+            }
 
 
 if __name__ == '__main__':
