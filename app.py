@@ -12,7 +12,7 @@ app = Flask(__name__)
 chrome_options = Options()
 chrome_options.add_argument("--headless")  # run in headless mode so no browser window is opened
 chrome_options.add_argument("--no-sandbox")
-
+chrome_options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36") # set user agent
 
 @app.route('/')
 def index():
