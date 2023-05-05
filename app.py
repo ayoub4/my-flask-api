@@ -29,7 +29,7 @@ def scrape():
     socket.setdefaulttimeout(360)
 
     # Create the Chrome driver instance
-
+    c = 0
 
     while True:
         driver = webdriver.Chrome(options=chrome_options)
@@ -56,6 +56,8 @@ def scrape():
 
         # If the data is not found, wait for a few seconds and try again
         if not title and not images:
+            print(c)
+            c = c+1
             time.sleep(5) # Wait for 5 seconds before retrying
         else:
             # Close the Chrome driver instance
