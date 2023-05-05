@@ -58,6 +58,7 @@ def scrape():
         if not title and not images:
             print(c)
             c = c+1
+            time.sleep(5) # Wait for 5 seconds before retrying
         else:
             # Close the Chrome driver instance
             driver.quit()
