@@ -1,6 +1,8 @@
 import random
 import string
 import socket
+import time
+
 from flask import Flask, request
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -27,43 +29,43 @@ def scrape():
     # Set timeout to 6 minutes (360 seconds)
     socket.setdefaulttimeout(360)
 
-    while True:
-        try:
-            # Create the Chrome driver instance
-            driver = webdriver.Chrome(options=chrome_options)
+    # Create the Chrome driver instance
+    driver = webdriver.Chrome(options=chrome_options)
 
-            # Clear cookies
-            driver.delete_all_cookies()
+    # Clear cookies
+    driver.delete_all_cookies()
 
-            driver.get(url)
-            soup = BeautifulSoup(driver.page_source, "html.parser")
+    # Initialize variables
+    title = ''
+    images = []
 
-            # Find the product title
-            product_title = soup.find("h1", class_="product-title-text")
-            title = product_title.text.strip() if product_title else ""
+    while not title and not images:
+        driver.get(url)
+        soup = BeautifulSoup(driver.page_source, "html.parser")
 
-            # Find all the images inside the "images-view-wrap" class
-            images_view_wrap = soup.find("div", class_="images-view-wrap")
-            images = []
-            if images_view_wrap:
-                for img in images_view_wrap.find_all("img"):
-                    src = img.get("src")
-                    if "jpg_50x50" in src:
-                        src = src.replace("jpg_50x50", "jpg")
-                    images.append(src)
+        # Find the product title
+        product_title = soup.find("h1", class_="product-title-text")
+        title = product_title.text.strip() if product_title else ""
 
-            # Close the Chrome driver instance
-            driver.quit()
+        # Find all the images inside the "images-view-wrap" class
+        images_view_wrap = soup.find("div", class_="images-view-wrap")
+        if images_view_wrap:
+            for img in images_view_wrap.find_all("img"):
+                src = img.get("src")
+                if "jpg_50x50" in src:
+                    src = src.replace("jpg_50x50", "jpg")
+                images.append(src)
 
-            return {
-                'images': images,
-                'title': title
-            }
+        # Sleep for a random amount of time before trying again (between 1 and 5 seconds)
+        time.sleep(random.uniform(1, 5))
 
-        except Exception as e:
-            # If an exception is raised, print the error and try again
-            print(f"Error: {e}")
-            continue
+    # Close the Chrome driver instance
+    driver.quit()
+
+    return {
+        'images': images,
+        'title': title
+    }
 
 
 if __name__ == '__main__':
