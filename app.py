@@ -27,36 +27,43 @@ def scrape():
     # Set timeout to 6 minutes (360 seconds)
     socket.setdefaulttimeout(360)
 
-    # Create the Chrome driver instance
-    driver = webdriver.Chrome(options=chrome_options)
+    while True:
+        try:
+            # Create the Chrome driver instance
+            driver = webdriver.Chrome(options=chrome_options)
 
-    # Clear cookies
-    driver.delete_all_cookies()
+            # Clear cookies
+            driver.delete_all_cookies()
 
-    driver.get(url)
-    soup = BeautifulSoup(driver.page_source, "html.parser")
+            driver.get(url)
+            soup = BeautifulSoup(driver.page_source, "html.parser")
 
-    # Find the product title
-    product_title = soup.find("h1", class_="product-title-text")
-    title = product_title.text.strip() if product_title else ""
+            # Find the product title
+            product_title = soup.find("h1", class_="product-title-text")
+            title = product_title.text.strip() if product_title else ""
 
-    # Find all the images inside the "images-view-wrap" class
-    images_view_wrap = soup.find("div", class_="images-view-wrap")
-    images = []
-    if images_view_wrap:
-        for img in images_view_wrap.find_all("img"):
-            src = img.get("src")
-            if "jpg_50x50" in src:
-                src = src.replace("jpg_50x50", "jpg")
-            images.append(src)
+            # Find all the images inside the "images-view-wrap" class
+            images_view_wrap = soup.find("div", class_="images-view-wrap")
+            images = []
+            if images_view_wrap:
+                for img in images_view_wrap.find_all("img"):
+                    src = img.get("src")
+                    if "jpg_50x50" in src:
+                        src = src.replace("jpg_50x50", "jpg")
+                    images.append(src)
 
-    # Close the Chrome driver instance
-    driver.quit()
+            # Close the Chrome driver instance
+            driver.quit()
 
-    return {
-        'images': images,
-        'title': title
-    }
+            return {
+                'images': images,
+                'title': title
+            }
+
+        except Exception as e:
+            # If an exception is raised, print the error and try again
+            print(f"Error: {e}")
+            continue
 
 
 if __name__ == '__main__':
