@@ -6,7 +6,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from urllib.parse import quote
-import time
 
 app = Flask(__name__)
 
@@ -14,10 +13,13 @@ chrome_options = Options()
 chrome_options.add_argument("--disable-gpu")
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--headless")
+chrome_options.add_argument("--incognito")
+chrome_options.add_argument("--disable-dev-shm-usage") # add this line
 
 @app.route("/")
 def hello():
     return "Hello, World!"
+
 
 @app.route("/scrape")
 def scrape():
@@ -25,10 +27,13 @@ def scrape():
     escaped_url = quote(url, safe=':/?&=')
     print(escaped_url)
     driver = webdriver.Chrome(options=chrome_options)
-    wait = WebDriverWait(driver, 10)
+    wait = WebDriverWait(driver, 30)
     driver.get(escaped_url)
-    wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "h1.product-title-text")))
-    time.sleep(1)
+    try:
+        wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "h1.product-title-text, div.error-message")))
+    except:
+        driver.quit()
+        return jsonify({"Error": "Failed to load webpage."})
     soup = BeautifulSoup(driver.page_source, "html.parser")
     product_title = soup.find("h1", class_="product-title-text")
     title = product_title.text.strip() if product_title else ""
@@ -42,7 +47,9 @@ def scrape():
                 images.append(src)
 
     print(title, images)
+    driver.quit()
     return jsonify({"Title": title,"Images": images})
+
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8000)
