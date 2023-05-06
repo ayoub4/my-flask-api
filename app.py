@@ -11,11 +11,7 @@ import time
 app = Flask(__name__)
 
 chrome_options = Options()
-chrome_options.add_argument("--disable-gpu")
-chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--headless")
-chrome_options.add_argument("--incognito")
-chrome_options.add_argument("--disable-dev-shm-usage") # add this line
 driver = webdriver.Chrome(options=chrome_options)
 @app.route("/")
 def hello():
