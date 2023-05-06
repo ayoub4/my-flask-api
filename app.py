@@ -62,28 +62,34 @@ def scrape():
     # Set timeout to 6 minutes (360 seconds)
     socket.setdefaulttimeout(360)
 
-    threads = []
-    for url in urls:
-        thread = ScraperThread(url)
-        threads.append(thread)
-        thread.start()
+    while True:
+        threads = []
+        for url in urls:
+            thread = ScraperThread(url)
+            threads.append(thread)
+            thread.start()
 
-    for thread in threads:
-        thread.join()
+        for thread in threads:
+            thread.join()
 
-    # Collect results
-    images = []
-    title = ""
-    for thread in threads:
-        if thread.title:
-            title = thread.title
-        if thread.images:
-            images.extend(thread.images)
+        # Collect results
+        images = []
+        title = ""
+        for thread in threads:
+            if thread.title:
+                title = thread.title
+            if thread.images:
+                images.extend(thread.images)
 
-    return {
-        'images': images,
-        'title': title
-    }
+        # If both images and title are empty, try again
+        if not images and not title:
+            continue
+
+        return {
+            'images': images,
+            'title': title
+        }
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000)
