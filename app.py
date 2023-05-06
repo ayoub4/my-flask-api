@@ -6,6 +6,7 @@ from flask import Flask, request
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from bs4 import BeautifulSoup
+import threading
 
 app = Flask(__name__)
 
@@ -14,17 +15,7 @@ firefox_options.headless = True  # run in headless mode so no browser window is 
 firefox_options.add_argument("--no-sandbox")
 firefox_options.set_preference("general.useragent.override", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36") # set user agent
 
-@app.route('/')
-def index():
-    # Generate a random string of length 10
-    random_text = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
-    return f"Random text: {random_text}"
-
-
-@app.route('/scrape')
-def scrape():
-    url = request.args.get('url')
-
+def scrape(url):
     # Set timeout to 6 minutes (360 seconds)
     socket.setdefaulttimeout(360)
 
@@ -67,6 +58,18 @@ def scrape():
                 'title': title
             }
 
+@app.route('/')
+def index():
+    # Generate a random string of length 10
+    random_text = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+    return f"Random text: {random_text}"
+
+@app.route('/scrape')
+def start_scrape():
+    url = request.args.get('url')
+    t = threading.Thread(target=scrape, args=(url,))
+    t.start()
+    return {'success': True}
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000)
