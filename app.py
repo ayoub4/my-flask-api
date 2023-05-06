@@ -15,48 +15,39 @@ firefox_options.headless = True  # run in headless mode so no browser window is 
 firefox_options.add_argument("--no-sandbox")
 firefox_options.set_preference("general.useragent.override", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36") # set user agent
 
-def scrape(url):
-    # Set timeout to 6 minutes (360 seconds)
-    socket.setdefaulttimeout(360)
+class ScraperThread(threading.Thread):
+    def __init__(self, url):
+        threading.Thread.__init__(self)
+        self.url = url
+        self.images = None
+        self.title = None
 
-    # Create the Firefox driver instance
-    c = 0
-
-    while True:
+    def run(self):
+        # Create the Firefox driver instance
         driver = webdriver.Firefox(options=firefox_options)
 
         # Clear cookies
         driver.delete_all_cookies()
         # Try to scrape the page
-        driver.get(url)
+        driver.get(self.url)
         soup = BeautifulSoup(driver.page_source, "html.parser")
 
         # Find the product title
         product_title = soup.find("h1", class_="product-title-text")
-        title = product_title.text.strip() if product_title else ""
+        self.title = product_title.text.strip() if product_title else ""
 
         # Find all the images inside the "images-view-wrap" class
         images_view_wrap = soup.find("div", class_="images-view-wrap")
-        images = []
+        self.images = []
         if images_view_wrap:
             for img in images_view_wrap.find_all("img"):
                 src = img.get("src")
                 if "jpg_50x50" in src:
                     src = src.replace("jpg_50x50", "jpg")
-                images.append(src)
+                self.images.append(src)
 
-        # If the data is not found, wait for a few seconds and try again
-        if not title and not images:
-            print(c)
-            c = c+1
-            time.sleep(5) # Wait for 5 seconds before retrying
-        else:
-            # Close the Firefox driver instance
-            driver.quit()
-            return {
-                'images': images,
-                'title': title
-            }
+        # Close the Firefox driver instance
+        driver.quit()
 
 @app.route('/')
 def index():
@@ -65,11 +56,34 @@ def index():
     return f"Random text: {random_text}"
 
 @app.route('/scrape')
-def start_scrape():
-    url = request.args.get('url')
-    t = threading.Thread(target=scrape, args=(url,))
-    t.start()
-    return {'success': True}
+def scrape():
+    urls = request.args.getlist('url')
+
+    # Set timeout to 6 minutes (360 seconds)
+    socket.setdefaulttimeout(360)
+
+    threads = []
+    for url in urls:
+        thread = ScraperThread(url)
+        threads.append(thread)
+        thread.start()
+
+    for thread in threads:
+        thread.join()
+
+    # Collect results
+    images = []
+    title = ""
+    for thread in threads:
+        if thread.title:
+            title = thread.title
+        if thread.images:
+            images.extend(thread.images)
+
+    return {
+        'images': images,
+        'title': title
+    }
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000)
