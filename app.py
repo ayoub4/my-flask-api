@@ -22,6 +22,7 @@ def hello():
 def scrape():
     url = request.args.get("url")
     escaped_url = quote(url, safe=':/?&=')
+    print(escaped_url)
     driver = webdriver.Chrome(options=chrome_options)
     driver.get(escaped_url)
     soup = BeautifulSoup(driver.page_source, "html.parser")
