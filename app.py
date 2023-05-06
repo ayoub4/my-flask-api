@@ -2,7 +2,7 @@ import random
 import string
 import socket
 import time
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
@@ -56,25 +56,51 @@ def index():
 
 
 @app.route('/scrape')
+@app.route('/scrape')
 def scrape():
-    urls = request.args.getlist('url')
+    url = request.args.get('url')
+    result = {}
 
     # Set timeout to 6 minutes (360 seconds)
     socket.setdefaulttimeout(360)
 
-    threads = []
+    # Create the Chrome driver instance
+    driver = webdriver.Chrome(options=chrome_options)
 
-    for url in urls:
-        t = threading.Thread(target=scrape_page, args=(url,))
-        threads.append(t)
-        t.start()
+    # Clear cookies
+    driver.delete_all_cookies()
+    # Try to scrape the page
+    driver.get(url)
+    soup = BeautifulSoup(driver.page_source, "html.parser")
 
-    for t in threads:
-        t.join()
+    # Find the product title
+    product_title = soup.find("h1", class_="product-title-text")
+    title = product_title.text.strip() if product_title else ""
 
-    return {
-        'success': True
-    }
+    # Find all the images inside the "images-view-wrap" class
+    images_view_wrap = soup.find("div", class_="images-view-wrap")
+    images = []
+    if images_view_wrap:
+        for img in images_view_wrap.find_all("img"):
+            src = img.get("src")
+            if "jpg_50x50" in src:
+                src = src.replace("jpg_50x50", "jpg")
+            images.append(src)
+
+    # If the data is not found, set the success status to False
+    if not title and not images:
+        result['success'] = False
+    else:
+        result['success'] = True
+        result['images'] = images
+        result['title'] = title
+
+    # Close the Chrome driver instance
+    driver.quit()
+
+    # Return the result as a JSON response
+    return jsonify(result)
+
 
 
 if __name__ == '__main__':
