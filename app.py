@@ -2,6 +2,9 @@ from bs4 import BeautifulSoup
 from flask import Flask, jsonify, request
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from urllib.parse import quote
 import time
 
@@ -24,10 +27,11 @@ def scrape():
     escaped_url = quote(url, safe=':/?&=')
     print(escaped_url)
     driver = webdriver.Chrome(options=chrome_options)
+    wait = WebDriverWait(driver, 10)
     driver.get(escaped_url)
-    time.sleep(2)  # add delay after getting URL
+    wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "h1.product-title-text")))
+    time.sleep(1)
     soup = BeautifulSoup(driver.page_source, "html.parser")
-    time.sleep(1)  # add delay after getting page source
     product_title = soup.find("h1", class_="product-title-text")
     title = product_title.text.strip() if product_title else ""
     images_view_wrap = soup.find("div", class_="images-view-wrap")
