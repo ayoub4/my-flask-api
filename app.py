@@ -11,8 +11,10 @@ import time
 app = Flask(__name__)
 
 chrome_options = Options()
+chrome_options.add_argument("--disable-gpu")
+chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--headless")
-driver = webdriver.Chrome(options=chrome_options)
+
 @app.route("/")
 def hello():
     return "Hello, World!"
@@ -22,6 +24,7 @@ def scrape():
     url = request.args.get("url")
     escaped_url = quote(url, safe=':/?&=')
     print(escaped_url)
+    driver = webdriver.Chrome(options=chrome_options)
     wait = WebDriverWait(driver, 10)
     driver.get(escaped_url)
     wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "h1.product-title-text")))
