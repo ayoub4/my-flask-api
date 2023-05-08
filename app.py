@@ -1,3 +1,6 @@
+import sys
+import platform
+from selenium.webdriver.chrome.service import Service
 from bs4 import BeautifulSoup
 from flask import Flask, jsonify, request
 from selenium import webdriver
@@ -8,10 +11,20 @@ import time
 app = Flask(__name__)
 
 chrome_options = Options()
-chrome_options.add_argument("--disable-gpu")
+
+chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+chrome_options.add_experimental_option("useAutomationExtension", False)
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--headless")
 chrome_options.add_argument("--disable-dev-shm-usage") # add this line
+
+if platform.system() == 'Windows':
+    chromedriver_path = 'chromedriver.exe'
+else:
+    chromedriver_path = 'chromedriver'
+
+service = Service(chromedriver_path)
 
 @app.route("/")
 def hello():
@@ -21,12 +34,10 @@ def hello():
 def scrape():
     url = request.args.get("url")
     escaped_url = quote(url, safe=':/?&=')
-    print(escaped_url)
-    driver = webdriver.Chrome(options=chrome_options)
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+    driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
     driver.get(escaped_url)
-    time.sleep(2)  # add delay after getting URL
     soup = BeautifulSoup(driver.page_source, "html.parser")
-    time.sleep(1)  # add delay after getting page source
     product_title = soup.find("h1", class_="product-title-text")
     title = product_title.text.strip() if product_title else ""
     images_view_wrap = soup.find("div", class_="images-view-wrap")
@@ -38,7 +49,6 @@ def scrape():
                 src = src.replace("jpg_50x50", "jpg")
                 images.append(src)
 
-    print(title, images)
     return jsonify({"Title": title,"Images": images})
 
 if __name__ == "__main__":
