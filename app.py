@@ -1,7 +1,5 @@
 import sys
 import platform
-
-import requests
 from selenium.webdriver.chrome.service import Service
 from bs4 import BeautifulSoup
 from flask import Flask, jsonify, request
@@ -32,34 +30,35 @@ service = Service(chromedriver_path)
 def hello():
     return "Hello, World!"
 
-
 @app.route("/scrape")
 def scrape():
     url = request.args.get("url")
     escaped_url = quote(url, safe=':/?&=')
-
-    # create a session object
-    session = requests.Session()
-    session.headers.update({'ali_apache_track': 'mt=1|ms=|mid=fr927446943znpae'})
-
-    # make the request with the session object
-    response = session.get(escaped_url)
-
-    # parse the response using BeautifulSoup
-    soup = BeautifulSoup(response.content, "html.parser")
-    product_title = soup.find("h1", class_="product-title-text")
-    title = product_title.text.strip() if product_title else ""
-    images_view_wrap = soup.find("div", class_="images-view-wrap")
-    images = []
-    if images_view_wrap:
-        for img in images_view_wrap.find_all("img"):
-            src = img.get("src")
-            if "jpg_50x50" in src:
-                src = src.replace("jpg_50x50", "jpg")
-                images.append(src)
-
-    return jsonify({"Title": title, "Images": images})
-
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+    driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+    result_found = False
+    count = 1
+    while not result_found:
+        print(f"Attempt #{count}")
+        driver.get(escaped_url)
+        soup = BeautifulSoup(driver.page_source, "html.parser")
+        product_title = soup.find("h1", class_="product-title-text")
+        title = product_title.text.strip() if product_title else ""
+        images_view_wrap = soup.find("div", class_="images-view-wrap")
+        images = []
+        if images_view_wrap:
+            for img in images_view_wrap.find_all("img"):
+                src = img.get("src")
+                if "jpg_50x50" in src:
+                    src = src.replace("jpg_50x50", "jpg")
+                    images.append(src)
+        if title or images:
+            result_found = True
+        else:
+            count += 1
+            time.sleep(1)
+    driver.quit()
+    return jsonify({"Title": title,"Images": images})
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8000)
