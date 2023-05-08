@@ -1,5 +1,7 @@
 import sys
 import platform
+
+import requests
 from selenium.webdriver.chrome.service import Service
 from bs4 import BeautifulSoup
 from flask import Flask, jsonify, request
@@ -30,23 +32,21 @@ service = Service(chromedriver_path)
 def hello():
     return "Hello, World!"
 
+
 @app.route("/scrape")
 def scrape():
     url = request.args.get("url")
     escaped_url = quote(url, safe=':/?&=')
-    driver = webdriver.Chrome(service=service, options=chrome_options)
-    driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
-    useragentarray = [
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36",
-    ]
-    for i in range(len(useragentarray)):
-        # Setting user agent iteratively as Chrome 108 and 107
-        driver.execute_cdp_cmd("Network.setUserAgentOverride", {"userAgent": useragentarray[i]})
-        print(driver.execute_script("return navigator.userAgent;"))
 
-    driver.get(escaped_url)
-    soup = BeautifulSoup(driver.page_source, "html.parser")
+    # create a session object
+    session = requests.Session()
+    session.headers.update({'ali_apache_track': 'mt=1|ms=|mid=fr927446943znpae'})
+
+    # make the request with the session object
+    response = session.get(escaped_url)
+
+    # parse the response using BeautifulSoup
+    soup = BeautifulSoup(response.content, "html.parser")
     product_title = soup.find("h1", class_="product-title-text")
     title = product_title.text.strip() if product_title else ""
     images_view_wrap = soup.find("div", class_="images-view-wrap")
@@ -58,7 +58,8 @@ def scrape():
                 src = src.replace("jpg_50x50", "jpg")
                 images.append(src)
 
-    return jsonify({"Title": title,"Images": images})
+    return jsonify({"Title": title, "Images": images})
+
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8000)
