@@ -30,7 +30,7 @@ def scrape():
     time.sleep(1)  # add delay after getting page source
     product_title = soup.find("h1", class_="product_title")
     title = product_title.text.strip() if product_title else ""
-    images_view_wrap = soup.find("il", class_="swiper-slide-visible")
+    images_view_wrap = soup.find("li", class_="swiper-slide-visible")
     images = []
     if images_view_wrap:
         for img in images_view_wrap.find_all("img"):
