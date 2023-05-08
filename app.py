@@ -33,32 +33,38 @@ def hello():
 @app.route("/scrape")
 def scrape():
     url = request.args.get("url")
-    escaped_url = quote(url, safe=':/?&=')
+    if not url:
+        return "Error: URL parameter missing"
+
+    # extract IP address from request
+    ip_address = request.remote_addr
+    if ip_address == "http://164.68.105.49":
+        # if the request comes from localhost, use the private IP address (e.g., 192.168.x.x)
+        local_address = "http://127.0.0.1:8000/scrape?url=" + quote(url, safe=':/?&=')
+    else:
+        # if the request comes from a public IP address, use the public IP address
+        local_address = "http://127.0.0.1:8000/scrape?url=" + quote(url, safe=':/?&=')
+
+    # send request to local URL
     driver = webdriver.Chrome(service=service, options=chrome_options)
     driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
-    result_found = False
-    count = 1
-    while not result_found:
-        print(f"Attempt #{count}")
-        driver.get(escaped_url)
-        soup = BeautifulSoup(driver.page_source, "html.parser")
-        product_title = soup.find("h1", class_="product-title-text")
-        title = product_title.text.strip() if product_title else ""
-        images_view_wrap = soup.find("div", class_="images-view-wrap")
-        images = []
-        if images_view_wrap:
-            for img in images_view_wrap.find_all("img"):
-                src = img.get("src")
-                if "jpg_50x50" in src:
-                    src = src.replace("jpg_50x50", "jpg")
-                    images.append(src)
-        if title or images:
-            result_found = True
-        else:
-            count += 1
-            time.sleep(1)
+    driver.get(local_address)
+    soup = BeautifulSoup(driver.page_source, "html.parser")
     driver.quit()
-    return jsonify({"Title": title,"Images": images})
+
+    product_title = soup.find("h1", class_="product-title-text")
+    title = product_title.text.strip() if product_title else ""
+    images_view_wrap = soup.find("div", class_="images-view-wrap")
+    images = []
+    if images_view_wrap:
+        for img in images_view_wrap.find_all("img"):
+            src = img.get("src")
+            if "jpg_50x50" in src:
+                src = src.replace("jpg_50x50", "jpg")
+                images.append(src)
+
+    # return response to client using the public IP address
+    return jsonify({"Title": title,"Images": images}), 200, {'Access-Control-Allow-Origin': '*'}
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8000)
