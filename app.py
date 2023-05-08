@@ -11,7 +11,6 @@ chrome_options = Options()
 chrome_options.add_argument("--disable-gpu")
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--headless")
-chrome_options.add_argument("--incognito")
 chrome_options.add_argument("--disable-dev-shm-usage") # add this line
 
 @app.route("/")
@@ -28,9 +27,9 @@ def scrape():
     time.sleep(2)  # add delay after getting URL
     soup = BeautifulSoup(driver.page_source, "html.parser")
     time.sleep(1)  # add delay after getting page source
-    product_title = soup.find("h1", class_="product_title")
+    product_title = soup.find("h1", class_="product-title-text")
     title = product_title.text.strip() if product_title else ""
-    images_view_wrap = soup.find("li", class_="swiper-slide-visible")
+    images_view_wrap = soup.find("div", class_="images-view-wrap")
     images = []
     if images_view_wrap:
         for img in images_view_wrap.find_all("img"):
