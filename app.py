@@ -36,6 +36,15 @@ def scrape():
     escaped_url = quote(url, safe=':/?&=')
     driver = webdriver.Chrome(service=service, options=chrome_options)
     driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+    useragentarray = [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36",
+    ]
+    for i in range(len(useragentarray)):
+        # Setting user agent iteratively as Chrome 108 and 107
+        driver.execute_cdp_cmd("Network.setUserAgentOverride", {"userAgent": useragentarray[i]})
+        print(driver.execute_script("return navigator.userAgent;"))
+
     driver.get(escaped_url)
     soup = BeautifulSoup(driver.page_source, "html.parser")
     product_title = soup.find("h1", class_="product-title-text")
