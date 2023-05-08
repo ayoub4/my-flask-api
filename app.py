@@ -18,6 +18,7 @@ chrome_options.add_experimental_option("useAutomationExtension", False)
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--headless")
 chrome_options.add_argument("--disable-dev-shm-usage") # add this line
+chrome_options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36")
 
 if platform.system() == 'Windows':
     chromedriver_path = 'chromedriver.exe'
@@ -33,25 +34,11 @@ def hello():
 @app.route("/scrape")
 def scrape():
     url = request.args.get("url")
-    if not url:
-        return "Error: URL parameter missing"
-
-    # extract IP address from request
-    ip_address = request.remote_addr
-    if ip_address == "http://164.68.105.49":
-        # if the request comes from localhost, use the private IP address (e.g., 192.168.x.x)
-        local_address = "http://127.0.0.1:8000/scrape?url=" + quote(url, safe=':/?&=')
-    else:
-        # if the request comes from a public IP address, use the public IP address
-        local_address = "http://127.0.0.1:8000/scrape?url=" + quote(url, safe=':/?&=')
-
-    # send request to local URL
+    escaped_url = quote(url, safe=':/?&=')
     driver = webdriver.Chrome(service=service, options=chrome_options)
     driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
-    driver.get(local_address)
+    driver.get(escaped_url)
     soup = BeautifulSoup(driver.page_source, "html.parser")
-    driver.quit()
-
     product_title = soup.find("h1", class_="product-title-text")
     title = product_title.text.strip() if product_title else ""
     images_view_wrap = soup.find("div", class_="images-view-wrap")
@@ -63,8 +50,7 @@ def scrape():
                 src = src.replace("jpg_50x50", "jpg")
                 images.append(src)
 
-    # return response to client using the public IP address
-    return jsonify({"Title": title,"Images": images}), 200, {'Access-Control-Allow-Origin': '*'}
+    return jsonify({"Title": title,"Images": images})
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8000)
