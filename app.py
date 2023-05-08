@@ -28,9 +28,9 @@ def scrape():
     time.sleep(2)  # add delay after getting URL
     soup = BeautifulSoup(driver.page_source, "html.parser")
     time.sleep(1)  # add delay after getting page source
-    product_title = soup.find("h1", class_="product-title-text")
+    product_title = soup.find("h1", class_="product_title")
     title = product_title.text.strip() if product_title else ""
-    images_view_wrap = soup.find("div", class_="images-view-wrap")
+    images_view_wrap = soup.find("il", class_="swiper-slide-visible")
     images = []
     if images_view_wrap:
         for img in images_view_wrap.find_all("img"):
